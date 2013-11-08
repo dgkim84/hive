@@ -1,4 +1,3 @@
-@()(implicit lang:Lang)
 @import utils.TemplateHelper._
 
 @**<!-- yobi.ui.Dialog -->**@
@@ -53,14 +52,19 @@
 <script type="text/javascript" src="@getJSLink("common/yobi.ui.Tabs")"></script>
 
 <script type="text/javascript">
-	$yobi.setScriptPath("@getJSPath()");
+    $yobi.setScriptPath("@getJSPath()");
 
-	$(document).ready(function(){
-		// tooltip
-		$("[data-toggle=tooltip]").tooltip();
+    $(document).ready(function(){
+        // tooltip
+        $("[data-toggle=tooltip]").tooltip();
 
-    	// jquery.placeholder plugin initiator
+        // jquery.placeholder plugin initiator
         $('input[type=text], textarea').placeholder();
+
+        // current language set!
+        if (typeof window.moment == "function" && typeof window.moment.lang == "function") {
+            moment.lang("@lang.language");
+        }
 
      	// yobi.Dropdown
      	var sActivation;
@@ -89,5 +93,5 @@
             "sListURL"  : "@routes.AttachmentApp.getFileList",
             "sUploadURL": "@routes.AttachmentApp.uploadFile"
         });
-	});
+    });
 </script>

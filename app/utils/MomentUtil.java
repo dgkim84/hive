@@ -35,10 +35,13 @@ import java.io.Reader;
  */
 public class MomentUtil {
 
-    private static final String MOMENT_JS_FILE = "public/javascripts/lib/moment.min.js";
-    private static final String MOMENT_KO_FILE = "public/javascripts/lib/moment.ko.js";
+    private static final String MOMENT_JS_FILE = "public/javascripts/lib/moment-with-langs.min.js";
 
     public static JSInvocable newMoment(Long epoch) {
+        return newMoment(epoch, Constants.DEFAULT_LANGUAGE);
+    }
+
+    public static JSInvocable newMoment(Long epoch, String language) {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine engine = manager.getEngineByName("JavaScript");
         Object moment;
@@ -49,10 +52,8 @@ public class MomentUtil {
             is = Thread.currentThread().getContextClassLoader().getResourceAsStream(MOMENT_JS_FILE);
             reader = new InputStreamReader(is);
             engine.eval(reader);
-
-            is = Thread.currentThread().getContextClassLoader().getResourceAsStream(MOMENT_KO_FILE);
-            reader = new InputStreamReader(is);
-            engine.eval(reader);
+            
+            ((Invocable) engine).invokeMethod(engine.get("moment"), "lang", language);
 
             if (epoch == null) {
                 moment = ((Invocable) engine).invokeFunction("moment");
@@ -62,11 +63,19 @@ public class MomentUtil {
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         } finally {
-            if(reader != null) {
-                try{ reader.close(); } catch (Exception e) { throw new RuntimeException(e); }
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
-            if(is != null) {
-                try{ is.close(); } catch (Exception e) { throw new RuntimeException(e); }
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
