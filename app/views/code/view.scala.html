@@ -1,5 +1,5 @@
 @(project:Project, branches:List[String], recursiveData:List[org.codehaus.jackson.node.ObjectNode], branch:String, path:String)
-@import utils.JodaDateUtil
+@import utils.JodaDateUtil.ago
 @import utils.TemplateHelper._
 @import java.net.URLEncoder
 
@@ -96,7 +96,7 @@
     }
 }
 @getFileDate(file:org.codehaus.jackson.JsonNode, field:String) = @{
-    JodaDateUtil.momentFromNow(file.get(field).getLongValue)
+    agoString(ago(file.get(field).getLongValue))
 }
 @getCorrectedPath(filePath:String, fileName:String) = @{
     if((filePath != "") && (filePath.substring(filePath.length() - 1) == "/")){
@@ -249,12 +249,12 @@
 </script>
 
 <link rel="stylesheet" type="text/css" href="/assets/stylesheets/dynatree/skin/ui.dynatree.css" />
-<script type="text/javascript" src="/assets/javascripts/lib/moment.min.js"></script>
-<script type="text/javascript" src="/assets/javascripts/lib/moment.ko.js"></script>
+<script type="text/javascript" src="/assets/javascripts/lib/moment-with-langs.min.js"></script>
 <script type="text/javascript" src="/assets/javascripts/lib/ace/ace.js"></script>
 <script type="text/javascript" src="/assets/javascripts/lib/spin.js"></script>
 <script type="text/javascript">
     $(document).ready(function(){
+        moment.lang("@lang.language");
         $yobi.loadModule("code.Browser", {
             "sProjectName": "@project.name",
             "sInitialPath": "@path",
