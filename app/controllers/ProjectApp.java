@@ -158,7 +158,7 @@ public class ProjectApp extends Controller {
      * @param projectName
      * @return 프로젝트 정보
      */
-    public static Result settingForm(String loginId, String projectName) {
+    public static Result settingForm(String loginId, String projectName) throws Exception {
         Project project = Project.findByOwnerAndProjectName(loginId, projectName);
 
         if (project == null) {
@@ -170,7 +170,8 @@ public class ProjectApp extends Controller {
         }
 
         Form<Project> projectForm = form(Project.class).fill(project);
-        return ok(setting.render("title.projectSetting", projectForm, project));
+        PlayRepository repository = RepositoryService.getRepository(project);
+        return ok(setting.render("title.projectSetting", projectForm, project, repository.getBranches()));
     }
 
     /**
@@ -235,9 +236,10 @@ public class ProjectApp extends Controller {
             flash(Constants.WARNING, RestrictedValidator.message.equals(error.message()) ?
                     "project.name.reserved.alert" : "project.name.alert");
             filledUpdatedProjectForm.reject("name");
+            Project project = Project.find.byId(Long.valueOf(filledUpdatedProjectForm.field("id").value()));
+            PlayRepository repository = RepositoryService.getRepository(project);
             return badRequest(setting.render("title.projectSetting",
-                    filledUpdatedProjectForm, Project.find.byId(
-                            Long.valueOf(filledUpdatedProjectForm.field("id").value()))));
+                    filledUpdatedProjectForm, project, repository.getBranches()));
         }
         Project updatedProject = filledUpdatedProjectForm.get();
 
@@ -267,13 +269,22 @@ public class ProjectApp extends Controller {
             }
         }
 
-        if (filledUpdatedProjectForm.hasErrors()) {
-            return badRequest(setting.render("title.projectSetting",
-                    filledUpdatedProjectForm, Project.find.byId(updatedProject.id)));
-        }
-
         Project project = Project.find.byId(updatedProject.id);
         PlayRepository repository = RepositoryService.getRepository(project);
+
+        if (filledUpdatedProjectForm.hasErrors()) {
+            return badRequest(setting.render("title.projectSetting",
+                    filledUpdatedProjectForm, Project.find.byId(updatedProject.id), repository.getBranches()));
+        }
+
+        Map<String, String[]> data = body.asFormUrlEncoded();
+        String defaultBranch = HttpUtil.getFirstValueFromQuery(data, "defaultBranch");
+        if (defaultBranch != null) {
+            try {
+                repository.updateSymbolicRef("HEAD", defaultBranch);
+            } catch (UnsupportedOperationException e) { // ignore
+            }
+        }
 
         if (!repository.renameTo(updatedProject.name)) {
             throw new FileOperationException("fail repository rename to " + project.owner + "/" + updatedProject.name);
